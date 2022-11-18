@@ -2,24 +2,29 @@ from engine_thread import EngineThread
 from control_thread import ControlThread
 from interface_thread import InterfaceThread
 from threading import Lock
-from global_variables import vel_reference
+import global_variables
 
-vel_lock = Lock() #Lock para lidar com a velocidade de referência, que existe em várias threads, como controle, interface e logger
+speed_lock = Lock() #Lock para lidar com a velocidade de referência, que existe em várias threads, como controle, interface e logger
 engine_lock = Lock() #Só libera o restante do processo depois que os motores forem escolhidos
 
 def main():
-    max_engine = 1
-    engines = [{"value": EngineThread(), "id": engine} for engine in range(0,max_engine)]
-    interface_thread = InterfaceThread(vel_lock, engine_lock)
+    global_variables.init()
+
+    max_engine = 30
+    engines = [{"value": EngineThread(engine, speed_lock), "id": engine} for engine in range(0,max_engine)]
+    interface_thread = InterfaceThread(speed_lock, engine_lock)
     interface_thread.start()
     interface_thread.join()
-    interface_thread.vel_reference
-    control_thread = ControlThread(engines, vel_lock, engine_lock)
+    control_thread = ControlThread(engines, speed_lock, engine_lock)
     control_thread.start()
 
-    print(vel_reference)
+    # print(vel_reference)
 
     control_thread.join()
+    print("Velocidade de referência", global_variables.vel_reference)
+
+    print("Velocidade final dos motores: ",global_variables.engine_speed)
+
 
     #ideia de funcionamento
     #control_thread starta
