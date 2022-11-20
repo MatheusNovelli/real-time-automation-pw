@@ -1,5 +1,7 @@
 from threading import Thread, Semaphore
+from timer import LoopTimer
 import time
+import asyncio
 import global_variables
 
 max_increasing_engines = 12
@@ -25,35 +27,24 @@ class EngineThread(Thread):
     def __init__(self, id, speed_lock):
 
         Thread.__init__(self)
-        self.engine_vel = None
-        self.engine_torque = None
+        self.engine_torque = 0.0
         self.id = id
         self.speed_lock = speed_lock
 
     def run(self):
-        print("Motor startou")
+        async def accelerate_engine():
+            while True:
+                self.engine_torque = (T*(km * global_variables.engine_voltage[self.id] - km*kb* global_variables.engine_speed[self.id] - ra * self.engine_torque))/la + self.engine_torque
+                global_variables.engine_speed[self.id] = (T*(self.engine_torque - b*global_variables.engine_speed[self.id]))/jm + global_variables.engine_speed[self.id]
+                # engines_sem.acquire()
+                # engines_sem.release()
+                await asyncio.sleep(0.1)
 
-        engine_torque = 0 #engine_torque[0] = atual  engine_torque[1] = proxima 
-        engine_vel = 0 #engine_vel[0] = atual  engine_vel[1] = proxima 
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(accelerate_engine())
 
-        # print(engines_sem._value)
 
-        count = 0
-
-        while True:
-            # print("XOTA")
-            count += 1
-            engine_torque = (T*(km * global_variables.engine_voltage[self.id] - km*kb*engine_vel - ra * engine_torque))/la + engine_torque
-            # print(engine_torque)
-            global_variables.engine_speed[self.id] = (T*(engine_torque - b*global_variables.engine_speed[self.id]))/jm + global_variables.engine_speed[self.id]
-
-            engines_sem.acquire()
-
-            engine_torque = engine_torque
-            global_variables.engine_speed[self.id] = global_variables.engine_speed[self.id]
-        
-
-            engines_sem.release()
+        # timer = LoopTimer(0.1, accelerate_engine)
+        # timer.start()
         # algoritmo que aumenta velocidade
-        
-        time.sleep(1)

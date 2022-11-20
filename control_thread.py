@@ -1,7 +1,9 @@
 from threading import Thread
 import random
-from time import sleep
+import time
+from timer import LoopTimer
 import global_variables
+import socket
 
 class ControlThread(Thread):
     def __init__(self, engines_thread, speed_lock, engine_lock):
@@ -10,8 +12,13 @@ class ControlThread(Thread):
         self.speed_lock = speed_lock
         self.engine_lock = engine_lock
         self.engines_thread = engines_thread
+        self.speed_msg = [0]
 
-    async def run(self):
+    def run(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((socket.gethostname(), 8000))
+        s.listen(5)    
+
         self.engine_lock.acquire()
 
         print("Começou a escolha de motores")
@@ -35,10 +42,12 @@ class ControlThread(Thread):
         print("Terminou a escolha de motores")
 
         
-        sleep(1)
+        time.sleep(1)
 
         sum = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         T = 0.1
+
+        
 
         with self.speed_lock:
             speed_attr_count = 0
@@ -61,12 +70,19 @@ class ControlThread(Thread):
 
             global_variables.vel_reference = indexed_speed_ref
 
-            i = 0
-            while i < 50:
+            
+            def control_engine():
+                clientsocket, address = s.accept()
+                self.speed_msg = [speed for speed in global_variables.engine_speed]
+                clientsocket.send(bytes(str(self.speed_msg)[1:-1], "UTF-8"))
                 for i in range(0, max_engines):
                     sum[i] += T*(global_variables.vel_reference[i] - global_variables.engine_speed[i]) 
                     global_variables.engine_voltage[i] = global_variables.vel_reference[i] - global_variables.engine_speed[i] + sum[i]
-                i += 1
+                print(global_variables.engine_speed)
+                print("VAZIOOOOO")
+            timer = LoopTimer(0.2, control_engine)
+            timer.start()
+
                 # print("Velocidade final dos motores: ",global_variables.engine_speed)
 
             
