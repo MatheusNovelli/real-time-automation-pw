@@ -1,9 +1,9 @@
 from threading import Thread
 import random
 import time
-from timer import LoopTimer
 import global_variables
 import socket, json
+import asyncio
 
 class ControlThread(Thread):
     def __init__(self, engines_thread, speed_lock, engine_lock, voltage_lock):
@@ -23,7 +23,6 @@ class ControlThread(Thread):
         s.listen(5)    
 
         with self.engine_lock:
-            print("Entrou - 1")
             running_engines = []
             max_engines_running = 12
             max_engines = 30
@@ -47,7 +46,6 @@ class ControlThread(Thread):
         T = 0.1
         
         with self.speed_lock:
-            print("Entrou - 2")
 
             speed_attr_count = 0
             count = 0
@@ -70,18 +68,20 @@ class ControlThread(Thread):
             print(global_variables.vel_reference)
             
         clientsocket, address = s.accept()
-        def control_engine():
+        async def control_engine():
+            while True:
+                with self.speed_lock:
+                    with self.voltage_lock:
+                        self.speed_msg = [speed for speed in global_variables.engine_speed]
+                        clientsocket.sendall(bytes(json.dumps(str(self.speed_msg)[1:-1]).encode()))
+                        # print(global_variables.engine_voltage)
+                        # print(global_variables.engine_speed)
+                        for i in range(0, max_engines):
+                            sum[i] += T*(global_variables.vel_reference[i] - global_variables.engine_speed[i]) 
+                            global_variables.engine_voltage[i] = global_variables.vel_reference[i] - global_variables.engine_speed[i] + sum[i]
+                await asyncio.sleep(0.2)
 
-            with self.speed_lock:
-                with self.voltage_lock:
-                    print("Entrou - 3")
-                    self.speed_msg = [speed for speed in global_variables.engine_speed]
-                    clientsocket.sendall(bytes(json.dumps(str(self.speed_msg)[1:-1]).encode()))
-                    # print(global_variables.engine_voltage)
-                    # print(global_variables.engine_speed)
-                    for i in range(0, max_engines):
-                        sum[i] += T*(global_variables.vel_reference[i] - global_variables.engine_speed[i]) 
-                        global_variables.engine_voltage[i] = global_variables.vel_reference[i] - global_variables.engine_speed[i] + sum[i]
-        timer = LoopTimer(0.2, control_engine)
-        timer.start()
-        print("Timer startou aqui")
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(control_engine())

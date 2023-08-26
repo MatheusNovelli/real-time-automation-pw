@@ -14,48 +14,27 @@ voltage_lock = Lock()
 engine_lock = Lock() #Só libera o restante do processo depois que os motores forem escolhidos
 
 def main():
-    # global_variables.init()
-
-    # max_engine = 30
-    # engines = [{"value": EngineThread(engine, speed_lock, voltage_lock), "id": engine} for engine in range(0,max_engine)]
-    # interface_thread = InterfaceThread(speed_lock, engine_lock)
-    # logger_thread = LoggerThread(speed_lock)
-    # control_thread = ControlThread(engines, speed_lock, engine_lock, voltage_lock)
-    # syn_process = Process(target=synoptic_process)
-
-    # interface_thread.start()
-    # interface_thread.join()
-
-    # logger_thread.start()
-
-    # control_thread.start()
-    # syn_process.start()
-
-    # control_thread.join()
-
     global_variables.init()
     syn_process = Process(target=synoptic_process)
+    max_engine = 30
+    engines = [{"value": EngineThread(engine, speed_lock, voltage_lock), "id": engine} for engine in range(0,max_engine)]
+    interface_thread = InterfaceThread(speed_lock, engine_lock)
+    logger_thread = LoggerThread(speed_lock)
+    control_thread = ControlThread(engines, speed_lock, engine_lock, voltage_lock)
+
+    interface_thread.start()
+    interface_thread.join()
+
+    logger_thread.start()
+
+    control_thread.start()
     syn_process.start()
-    while True:     
-        max_engine = 30
-        engines = [{"value": EngineThread(engine, speed_lock, voltage_lock), "id": engine} for engine in range(0,max_engine)]
-        interface_thread = InterfaceThread(speed_lock, engine_lock)
-        logger_thread = LoggerThread(speed_lock)
-        control_thread = ControlThread(engines, speed_lock, engine_lock, voltage_lock)
+    time.sleep(60)
+    control_thread.join()
+    logger_thread.join()
+    syn_process.join()
 
-        print("interface thread iniciada")
-        interface_thread.start()
-        interface_thread.join()
 
-        logger_thread.start()
-
-        control_thread.start()
-        time.sleep(10)
-        print('cu de cachorro')
-        control_thread.join()
-        print('macaco')
-        logger_thread.join()
-        print('chimpamze')
 
 if __name__ == "__main__":
     main()
