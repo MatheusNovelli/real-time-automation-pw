@@ -56,3 +56,51 @@ decidimos encerrar o programa após esse minuto. Portanto, depois do controle re
 Nenhuma biblioteca externa foi utilizada, portanto não é necessário realizar nenhuma instalação, dentre as bibliotecas utilizadas
 se destacam a threading, socket e time.
 
+--------------------------------------------------------------------------------------------------------------------------------
+
+# Final Practical Project
+
+## Project Description
+An electrical testing company has a bank of 30 motors that it uses for various tests and training sessions. However, for safety reasons, only 12 of them can be powered on simultaneously. Additionally, two motors in sequence cannot operate at the same time.
+
+## File Structure
+The project is divided into files by threads, in addition to having files for global variables and the main function.
+
+**-> control_thread:**  
+Control thread, responsible for selecting and starting the motors, as well as controlling the voltage and speed of each one. It also establishes socket communication with the synoptic process to transmit the current speed values of each motor.
+
+**-> engine_thread:**  
+Motor thread, where each motor, once started, is responsible for its own speed and torque increase.
+
+**-> interface_thread:**  
+Interface thread, responsible for capturing user input from the keyboard to set the speed of each motor randomly chosen by the controller.
+
+**-> logger_thread:**  
+Logger thread, responsible for storing the speed values of the motors every second, along with a timestamp, in a log file (`log.txt`).
+
+**-> sypnotic_process:**  
+Process that communicates with the control thread via socket and is responsible for storing the motor speed values in a historian file. It is recommended to delete the file after each execution of the process since it can become very large due to the high data flow reaching it.
+
+**-> timer:**  
+Device responsible for repeating tasks. It receives the repetition time and the callback function (the task to be repeated) as arguments.
+
+**-> global_variables:**  
+File containing global variables and their locks (mutex).
+
+**-> main:**  
+Main process, responsible for initializing and terminating threads and processes.
+
+## Running the Project
+To run the project, simply enter the command `python main.py runserver 8081`. If this port is already in use on your computer, you can run it on the next available port, which in this case would be 8082.
+
+Once this is done, the program will prompt you to enter a list of motor speeds, requiring a list of 12 numerical elements. To do this, it is recommended to follow the example values displayed in the terminal.
+
+`[55.2, 40, 87, 45.7, 92.1, 20, 35, 76, 86, 86, 15.2, 42]`
+
+Since we were unable to implement the loop, after the control operates for 1 minute, due to anomalies it generated in the speed convergence, we decided to terminate the program after this minute. Therefore, after the control has completed its task, you need to restart the project.
+
+## Libraries Used
+No external libraries were used, so no installation is required. The most notable libraries used include `threading`, `socket`, and `time`. 
+
+
+
